@@ -1,327 +1,381 @@
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
-import 'dart:async';
-import 'package:shimmer/shimmer.dart';
-import 'package:test_project/products_scree.dart';
+import 'dart:ui';
+import 'package:google_nav_bar/google_nav_bar.dart';
 
 void main() {
-  runApp(MaterialApp(
-    debugShowCheckedModeBanner: false,
-    home: HomeScreen(),
-  ));
+  runApp(const MyApp());
 }
 
-class HomeScreen extends StatefulWidget {
-  @override
-  _HomeScreenState createState() => _HomeScreenState();
-}
-
-class _HomeScreenState extends State<HomeScreen> {
-  List<Category> categories = [];
-  List<Product> products = [];
-  bool isLoadingCategories = true;
-  bool isLoadingProducts = true;
-  bool hasError = false;
-  int currentPage = 1;
-  final int productsPerPage = 20;
-
-  @override
-  void initState() {
-    super.initState();
-    fetchCategories();
-    fetchProducts(currentPage);
-  }
-
-  Future<void> fetchCategories() async {
-    const url = 'https://api.escuelajs.co/api/v1/categories';
-    try {
-      final response = await http.get(Uri.parse(url)).timeout(Duration(seconds: 10));
-      if (response.statusCode == 200) {
-        final List<dynamic> data = json.decode(response.body);
-        setState(() {
-          categories = data.map((json) => Category.fromJson(json)).toList();
-          isLoadingCategories = false;
-        });
-      } else {
-        setState(() {
-          hasError = true;
-          isLoadingCategories = false;
-        });
-      }
-    } catch (e) {
-      setState(() {
-        hasError = true;
-        isLoadingCategories = false;
-      });
-    }
-  }
-
-  Future<void> fetchProducts(int page) async {
-    final url = 'https://api.escuelajs.co/api/v1/products?offset=${(page - 1) * productsPerPage}&limit=$productsPerPage';
-    try {
-      final response = await http.get(Uri.parse(url)).timeout(Duration(seconds: 10));
-      if (response.statusCode == 200) {
-        final List<dynamic> data = json.decode(response.body);
-        setState(() {
-          products = data.map((json) => Product.fromJson(json)).toList();
-          isLoadingProducts = false;
-        });
-      } else {
-        setState(() {
-          hasError = true;
-          isLoadingProducts = false;
-        });
-      }
-    } catch (e) {
-      setState(() {
-        hasError = true;
-        isLoadingProducts = false;
-      });
-    }
-  }
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      home: BookDetailsScreen(),
+    );
+  }
+}
+
+class BookDetailsScreen extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Categories & Products'),
-        centerTitle: true,
-      ),
-      body: ListView(
+      extendBody: true, // Ensures the navigation bar is transparent
+      body: Stack(
         children: [
-          _buildCategoriesSection(),
-          SizedBox(height: 20),
-          _buildProductsSection(),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildCategoriesSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        isLoadingCategories
-            ? _buildShimmerCategories()
-            : SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: Row(
-            children: categories.map((category) => _buildCategoryCard(category)).toList(),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildProductsSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0),
-          child: Text(
-            'All Products',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
-        ),
-        SizedBox(height: 10),
-        isLoadingProducts
-            ? _buildShimmerProducts()
-            : GridView.builder(
-          shrinkWrap: true,
-          physics: NeverScrollableScrollPhysics(),
-          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 2,
-            childAspectRatio: 0.75,
-            crossAxisSpacing: 10,
-            mainAxisSpacing: 10,
-          ),
-          itemCount: products.length,
-          itemBuilder: (context, index) {
-            return _buildProductCard(products[index]);
-          },
-        ),
-        if (!isLoadingProducts)
-          Center(
-            child: TextButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => ProductsScreen(),
-                  ),
-                );
-              },
-              child: Text(
-                'See More',
-                style: TextStyle(color: Colors.blue, fontWeight: FontWeight.bold),
+          // Gradient Background
+          Container(
+            decoration: const BoxDecoration(
+              gradient: RadialGradient(
+                center: Alignment.topLeft,
+                radius: 1.7, // Adjusted gradient size
+                colors: [
+                  Color(0xFFAF7832), // Upper left color
+                  Color(0xFF281C12), // Rest of the screen
+                ],
               ),
             ),
           ),
-      ],
-    );
-  }
+          // Blur Effect
+          BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 40.0, sigmaY: 40.0),
+            child: Container(
+              color: Colors.black.withOpacity(0.5),
+            ),
+          ),
+          // Content
+          SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // App Bar
+                    Row(
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.arrow_back, color: Colors.white),
+                          onPressed: () {},
+                        ),
+                        const Spacer(),
+                        IconButton(
+                          icon: const Icon(Icons.favorite_border, color: Colors.white),
+                          onPressed: () {},
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    // Book Details
+                    Row(
+                      children: [
+                        // Book Image
+                        Container(
+                          width: 120,
+                          height: 180,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(8),
+                            image: const DecorationImage(
+                              image: NetworkImage(
+                                'https://boighor.com/_next/image?url=https%3A%2F%2Fd25swln94uq8y4.cloudfront.net%2Fmedia%2Fbook_th%2Feb002652.jpg&w=1920&q=70',
+                              ),
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        // Book Information
+                        const Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // Title
+                              const Text(
+                                "সাব-ইন্সপেক্টর পুলিশ নিয়োগ সহায়িকা",
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(height: 5),
+                              // Author or Publisher Name
+                              const Text(
+                                "নিয়োগ পাবলিকেশন",
+                                style: TextStyle(
+                                  color: Colors.cyan,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.normal,
+                                ),
+                              ),
+                              const SizedBox(height: 5),
+                              // Price and Savings
+                              Row(
+                                children: const [
+                                Text.rich(
+                                  TextSpan(
+                                    children: <TextSpan>[
+                                      TextSpan(
+                                        text: "৳ 300",
+                                        style: TextStyle(
+                                          color: Colors.orange,
+                                          fontSize: 14,
+                                          decoration: TextDecoration.lineThrough,
+                                          decorationColor: Colors.white, // Set the line color to white
+                                        ),
+                                      ),
+                                      TextSpan(
+                                        text: " ৳188",
+                                        style: TextStyle(
+                                          color: Colors.orange,
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                              ),
+                                  SizedBox(width: 8),
+                                  Text(
+                                    "You save ৳112 (37%)", // Savings
+                                    style: TextStyle(
+                                      color: Colors.green,
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 5),
+                              // Edition
+                              const Text(
+                                "Edition: 2024-25",
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 14,
+                                ),
+                              ),
+                              const SizedBox(height: 5),
+                              // Category
+                              const Text(
+                                "Category: BCS and JOBS | Government Jobs",
+                                style: TextStyle(
+                                  color: Colors.redAccent,
+                                  fontSize: 14,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              // Short Description
+                              const Text(
+                                "বেসিক সাব-ইন্সপেক্টর পুলিশ সার্জেন্ট নিয়োগ সহায়িকা",
+                                style: TextStyle(
+                                  color: Colors.grey,
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ],
+                          )
 
-  /// Shimmer effect for categories
-  Widget _buildShimmerCategories() {
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: Row(
-        children: List.generate(5, (index) {
-          return Container(
-            width: 150,
-            margin: EdgeInsets.symmetric(horizontal: 8.0),
-            child: Shimmer.fromColors(
-              baseColor: Colors.grey[300]!,
-              highlightColor: Colors.grey[100]!,
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16.0),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    // Buttons
+                    Row(
+                      children: [
+                        Expanded(
+                          child: SizedBox(
+                            height: MediaQuery.of(context).size.height * 0.072,
+                            child: ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.grey[800],
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                              ),
+                              onPressed: () {},
+                              child: const Text(
+                                "Add to card",
+                                style: TextStyle(color: Colors.white),
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              padding: EdgeInsets.zero,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
+                            onPressed: () {},
+                            child: Ink(
+                              decoration: const BoxDecoration(
+                                gradient: LinearGradient(
+                                  colors: [
+                                    Color(0xFFDA5E3C), // Start gradient color
+                                    Color(0xFFF7A31A), // End gradient color
+                                  ],
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                ),
+                                borderRadius: BorderRadius.all(Radius.circular(8)),
+                              ),
+                              child: Container(
+                                alignment: Alignment.center,
+                                constraints: const BoxConstraints(
+                                  minHeight: 50,
+                                ),
+                                child: const Text(
+                                  "Buy Now",
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    // More Recommended Section
+                    const Text(
+                      "এই লেখকের আরও বই",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    SizedBox(
+                      height: 140,
+                      child: ListView.separated(
+                        scrollDirection: Axis.horizontal,
+                        itemCount: 5,
+                        separatorBuilder: (context, index) =>
+                        const SizedBox(width: 16),
+                        itemBuilder: (context, index) {
+                          return Column(
+                            children: [
+                              Container(
+                                width: 80,
+                                height: 100,
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(8),
+                                  image: const DecorationImage(
+                                    image: NetworkImage(
+                                      'https://boighor.com/_next/image?url=https%3A%2F%2Fd25swln94uq8y4.cloudfront.net%2Fmedia%2Fbook_th%2Feb002603.jpg&w=1920&q=70',
+                                    ),
+                                    fit: BoxFit.cover,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              const Text(
+                                "ছায়াশরীরী",
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 12,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          );
+                        },
+                      ),
+                    ),
+                    // another section
+                    const Text(
+                      "এ রকম আরও বই",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    SizedBox(
+                      height: 140,
+                      child: ListView.separated(
+                        scrollDirection: Axis.horizontal,
+                        itemCount: 5,
+                        separatorBuilder: (context, index) =>
+                        const SizedBox(width: 16),
+                        itemBuilder: (context, index) {
+                          return Column(
+                            children: [
+                              Container(
+                                width: 80,
+                                height: 100,
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(8),
+                                  image: const DecorationImage(
+                                    image: NetworkImage(
+                                      'https://boighor.com/_next/image?url=https%3A%2F%2Fd25swln94uq8y4.cloudfront.net%2Fmedia%2Fbook_th%2F015dc1f4.jpg&w=1920&q=70',
+                                    ),
+                                    fit: BoxFit.cover,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              const Text(
+                                "দ্যা হাউজ অফ স্যোল",
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 12,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          );
+                        },
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
-          );
-        }),
+          ),
+        ],
       ),
-    );
-  }
-
-  /// Shimmer effect for products
-  Widget _buildShimmerProducts() {
-    return GridView.builder(
-      shrinkWrap: true,
-      physics: NeverScrollableScrollPhysics(),
-      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        childAspectRatio: 0.75,
-        crossAxisSpacing: 10,
-        mainAxisSpacing: 10,
-      ),
-      itemCount: 4,
-      itemBuilder: (context, index) {
-        return Shimmer.fromColors(
-          baseColor: Colors.grey[300]!,
-          highlightColor: Colors.grey[100]!,
-          child: Container(
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16.0),
+      // Google Nav Bar
+      bottomNavigationBar: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        child: GNav(
+          backgroundColor: Colors.transparent,
+          color: Colors.grey, // Unselected color
+          activeColor: Colors.orange, // Selected icon color
+          tabBackgroundColor: Colors.orange.withOpacity(0.2),
+          padding: const EdgeInsets.all(12),
+          tabs: const [
+            GButton(
+              icon: Icons.home,
+              text: "Home",
             ),
-          ),
-        );
-      },
-    );
-  }
-
-  /// Category Card Widget
-  Widget _buildCategoryCard(Category category) {
-    return Container(
-      width: 150,
-      margin: EdgeInsets.symmetric(horizontal: 8.0),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16.0),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.2),
-            spreadRadius: 3,
-            blurRadius: 5,
-            offset: Offset(0, 3),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          Image.network(
-            category.image,
-            height: 100,
-            fit: BoxFit.cover,
-          ),
-          Text(category.name, style: TextStyle(fontWeight: FontWeight.bold)),
-        ],
-      ),
-    );
-  }
-
-  /// Product Card Widget
-  Widget _buildProductCard(Product product) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16.0),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.2),
-            spreadRadius: 3,
-            blurRadius: 5,
-            offset: Offset(0, 3),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(
-            child: ClipRRect(
-              borderRadius: BorderRadius.vertical(top: Radius.circular(16.0)),
-              child: Image.network(
-                product.images[0],
-                fit: BoxFit.cover,
-                width: double.infinity,
-              ),
+            GButton(
+              icon: Icons.explore,
+              text: "Explore",
             ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Text(product.title, maxLines: 2, overflow: TextOverflow.ellipsis),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8.0),
-            child: Text(
-              '\$${product.price}',
-              style: TextStyle(fontWeight: FontWeight.bold, color: Colors.green),
+            GButton(
+              icon: Icons.favorite_border,
+              text: "Wishlist",
             ),
-          ),
-        ],
+            GButton(
+              icon: Icons.person,
+              text: "Profile",
+            ),
+          ],
+        ),
       ),
     );
   }
 }
-
-/// Models for Category and Product
-class Category {
-  final int id;
-  final String name;
-  final String image;
-
-  Category({required this.id, required this.name, required this.image});
-
-  factory Category.fromJson(Map<String, dynamic> json) {
-    return Category(
-      id: json['id'],
-      name: json['name'],
-      image: json['image'],
-    );
-  }
-}
-
-class Product {
-  final int id;
-  final String title;
-  final double price;
-  final List<String> images;
-
-  Product({required this.id, required this.title, required this.price, required this.images});
-
-  factory Product.fromJson(Map<String, dynamic> json) {
-    return Product(
-      id: json['id'],
-      title: json['title'],
-      price: json['price'].toDouble(),
-      images: List<String>.from(json['images']),
-    );
-  }
-}
-

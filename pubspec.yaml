@@ -37,6 +37,7 @@ dependencies:
   cupertino_icons: ^1.0.8
   http: ^1.2.2
   shimmer: ^3.0.0
+  google_nav_bar: ^5.0.7
 #  connectivity_plus: ^6.1.0
 
 dev_dependencies:
